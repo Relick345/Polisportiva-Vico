@@ -108,6 +108,7 @@ import {getFirestore,collection,doc,getDoc,setDoc,deleteDoc,onSnapshot,writeBatc
 
 const firebaseConfig={apiKey:"AIzaSyAkkXqDZlSJUwdjFWkvoUfHagvAQJA9pWQ",authDomain:"vico-f7511.firebaseapp.com",projectId:"vico-f7511",storageBucket:"vico-f7511.firebasestorage.app",messagingSenderId:"33132981262",appId:"1:33132981262:web:245696feacf34c70a8205f",measurementId:"G-6CMTDLB87K"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+// Admin di riserva: funzionano sempre (email verificata). Tutti gli altri ruoli si cambiano da Firestore → users → campo "ruolo".
 const ADMINS=["marianna.coccimiglio@gmail.com","mariannacoccimiglio@gmail.com","riccardo.nicchi27@gmail.com","riccardonicchi27@gmail.com"];
 const DATA={"kids":[["Lunedì","Adriano Belligno","Atletica","III - A","3486517065"],["Lunedì","Alessio Iniziato","Atletica","IV - C","3393332633"],["Lunedì","Alessio Tofani","Basket","I - A","3472109182"],["Lunedì","Andrea Russo","Basket","I - D","3335665534"],["Lunedì","Leonardo Curti","Atletica","IV - D","3382976772"],["Lunedì","Diego Giacomantonio","Basket","I - A","3276510015"],["Lunedì","Gabriele Florio","Atletica","I - A","3929256572"],["Lunedì","Gaia Lucantoni","Basket","II - D","3497640233"],["Lunedì","Gentile Zito Leonardo","Da assegnare","I - D","3476552134"],["Lunedì","Giacomo Di Vincenzo","Atletica","II - D","3920898988"],["Lunedì","Giulio Calzone","Basket","II - D","3497651262"],["Lunedì","Greta De Leo","Atletica","III - A","3313616438"],["Lunedì","Licia Vendittelli","Atletica","IV - B","3286984340"],["Lunedì","Leonardo Egidi","Basket","III - B","3290707487"],["Lunedì","Lorenzo D'Amato","Basket","II - D","3405351750"],["Lunedì","Luca Fortunato","Atletica","IV - C","3398747807"],["Lunedì","Ludovica Marini","Atletica","II - C","3312380016"],["Lunedì","Ludovico Salvati","Basket","","3282869766"],["Lunedì","Niccolo Nardo","Basket","II - D","3473801554"],["Lunedì","Nina Pesoli","Basket","II - D","3200338938"],["Lunedì","Palmieri Leonardo","Da assegnare","","3478464452"],["Lunedì","Samuele Mora","Basket","II - C","3385443482"],["Lunedì","Gabriel Nicolosi","Atletica","III - B","3476204494"],["Lunedì","Sofia Di Croce","Basket","",""],["Martedì","Angelica Caratelli","Pallavolo","IV - A",""],["Martedì","Cecilia Palomba","Pallavolo","II - D","3312923364"],["Martedì","Diego Giacomantonio","Calcio","I - A","3276510015"],["Martedì","Gentile Zito Leonardo","Calcio","I - D","3476552134"],["Martedì","Giacomo Di Vincenzo","Da assegnare","II - D","3920898988"],["Martedì","Noemi Albensi","Pallavolo","IV - B","3384437243"],["Martedì","Palmieri Leonardo","Da assegnare","","3478464452"],["Martedì","Pietro Ruggeri","Pallavolo","II - D",""],["Martedì","Samuele Rossi","Pallavolo","IV - C","3491937083"],["Martedì","Tommaso Gasbarri","Pallavolo","IV - C","3403500401"],["Martedì","Viola Massimi","Pallavolo","",""],["Martedì","Zoe Pochetti","Pallavolo","II - A","3381581072"],["Martedì","Marla Greca","Pallavolo","IV - A","3388353156"],["Mercoledì","Alessia Carnabuci","Pattinaggio","I - C","3487888781"],["Mercoledì","Andrea Antonucci","Karate","II - C","3936362259"],["Mercoledì","Aurora Borello","Pattinaggio","I - C","3299878030"],["Mercoledì","Aurora Costa","Pattinaggio","IV - B","3496074792"],["Mercoledì","Beatrice Zimbolo","Pattinaggio","I - A","3396658555"],["Mercoledì","Chiara Sofia Langiano","Karate","II - A","3475455995"],["Mercoledì","Diego Giacomantonio","Karate","I - A","3276510015"],["Mercoledì","Emma Egidi","Pattinaggio","I - D","3290707487"],["Mercoledì","Elena Abbattista","Pattinaggio","II - A","3478523261"],["Mercoledì","Elisa Piazza","Pattinaggio","III - A","3200438879"],["Mercoledì","Ludovica Marini","Pattinaggio","II - C","3312380016"],["Mercoledì","Gentile Zito Francesco","Karate","IV - A","3476552134"],["Mercoledì","Gentile Zito Leonardo","Karate","I - D","3476552134"],["Mercoledì","Giacomo Di Vincenzo","Pattinaggio","II - D","3920898988"],["Mercoledì","Giada Ventura","Pattinaggio","IV - B","3336981278"],["Mercoledì","Ginevra Costantino","Pattinaggio","II - A","3284519617"],["Mercoledì","Giulia Pette","Pattinaggio","IV - A","3491467564"],["Mercoledì","Giulio Calzone","Karate","II - D","3497651262"],["Mercoledì","Giulio Loedori","Karate","II - D","3883730803"],["Mercoledì","Greta Orlandi","Pattinaggio","IV - A","3927574751"],["Mercoledì","Leonardo Nocenti","Karate","II - A","3341268593"],["Mercoledì","Lorenzo D'Amato","Karate","II - D","3405351750"],["Mercoledì","Lorenzo Melito","Karate","II - D","3297141106"],["Mercoledì","Lorenzo Venturi","Karate","II - C","3382305608"],["Mercoledì","Ludovica Pascolini","Pattinaggio","II - D","3385219987"],["Mercoledì","Manuele Di Meglio","Karate","III - A","3458345016"],["Mercoledì","Palmieri Leonardo","Pattinaggio","","3478464452"],["Mercoledì","Sara Olini","Pattinaggio","III - A","3389811980"],["Mercoledì","Sofia Linda Ciccolella","Karate","I - A","3666818009"],["Mercoledì","Sofia Andresini","Pattinaggio","II - C","3382404897"],["Mercoledì","Sveva Senese","Pattinaggio","III - D","3471152246"],["Mercoledì","Sveva Ventura","Pattinaggio","IV - B","3336981278"],["Mercoledì","Viola Niscio","Pattinaggio","III - A","3285594299"],["Mercoledì","Virginia Cucchi","Pattinaggio","III - C","3497010273"],["Mercoledì","Virginia Paglioni","Pattinaggio","IV - B","3931181235"],["Mercoledì","Vittoria Antinucci","Pattinaggio","II - A","3398959794"],["Mercoledì","Vittoria Orlandi","Karate","I - C","3927574751"],["Mercoledì","Zoe Pochetti","Pattinaggio","II - A","3381581072"],["Mercoledì","Anna Chiara Gneo","Pattinaggio","IV - B",""],["Mercoledì","Maria Letizia Gneo","Pattinaggio","IV - B",""],["Giovedì","Angelica Caratelli","Pallavolo","IV - A",""],["Giovedì","Alessandro Dore","Atletica","III - D","3348684178"],["Giovedì","Cecilia Palomba","Pallavolo","II - D","3312923364"],["Giovedì","Leonardo Curti","Atletica","IV - D","3382976772"],["Giovedì","Dennis Marzocchi","Atletica","II - C","3208228221"],["Giovedì","Diego Giacomantonio","Da assegnare","I - A","3276510015"],["Giovedì","Elena Abbattista","Pallavolo","II - A","3478523261"],["Giovedì","Gabriele Florio","Atletica","I - A","3929256572"],["Giovedì","Gaia Maiarelli","Atletica","I - A","3394656768"],["Giovedì","Gentile Zito Leonardo","Da assegnare","I - D","3476552134"],["Giovedì","Giacomo Di Vincenzo","Da assegnare","II - D","3920898988"],["Giovedì","Giulia Bronzini","Atletica","III - A","3313616438"],["Giovedì","Ludovica Marini","Atletica","II - C","3312380016"],["Giovedì","Licia Vendittelli","Atletica","IV - B","3286984340"],["Giovedì","Luca Fortunato","Atletica","IV - C","3398747807"],["Giovedì","Noemi Albensi","Pallavolo","IV - B","3384437243"],["Giovedì","Palmieri Leonardo","Da assegnare","","3478464452"],["Giovedì","Pietro Ruggeri","Pallavolo","II - D",""],["Giovedì","Samuele Rossi","Pallavolo","IV - C","3491937083"],["Giovedì","Tommaso Gasbarri","Pallavolo","IV - C","3403500401"],["Giovedì","Viola Massimi","Pallavolo","",""],["Giovedì","Vittoria Antinucci","Pallavolo","II - A","3398959794"],["Giovedì","Vittoria Orlandi","Pallavolo","I - C","3927574751"],["Giovedì","Marla Greca","Pallavolo","IV - A","3388353156"],["Giovedì","Laura Giustini","Pallavolo","",""],["Giovedì","Gabriel Nicolosi","Atletica","III - B","3476204494"],["Venerdì","Alessio Tofani","Basket","I - A","3472109182"],["Venerdì","Diego Giacomantonio","Calcio","I - A","3276510015"],["Venerdì","Gaia Lucantoni","Basket","II - D","3497640233"],["Venerdì","Gentile Zito Francesco","Calcio","IV - A","3476552134"],["Venerdì","Gentile Zito Leonardo","Calcio","I - D","3476552134"],["Venerdì","Lorenzo D'Amato","Basket","II - D","3405351750"],["Venerdì","Lorenzo Venturi","Basket","II - C","3382305608"],["Venerdì","Leonardo Egidi","Basket","III - B","3290707487"],["Venerdì","Niccolo Nardo","Basket","II - D","3473801554"],["Venerdì","Nina Pesoli","Basket","II - D","3200338938"],["Venerdì","Palmieri Leonardo","Da assegnare","","3478464452"],["Venerdì","Samuele Mora","Basket","II - C","3385443482"],["Venerdì","Ludovico Salvati","Basket","","3282869766"],["Venerdì","Andrea Russo","Basket","I - D","3335665534"],["Venerdì","Giacomo Di Vincenzo","Da assegnare","II - D","3920898988"],["Venerdì","Sofia Di Croce","Basket","",""]],"b2627":{"Lunedi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Simoncelli IN","Simoncelli OUT","Vico"],"slots":[["14:00",{}],["14:30",{"Vico":"Pallavolo u14F"}],["15:00",{}],["15:30",{"Nomentano":"Yoga (da confermare)"}],["16:00",{"Vico":"Ginnastica Adulti"}],["16:30",{"Simoncelli IN":"Basket","Simoncelli OUT":"Atletica"}],["17:00",{"Vico":"Pallavolo S3"}],["17:30",{}],["18:00",{"Simoncelli IN":"Basket"}],["18:30",{}],["19:00",{"G.Bruno Gin":"Prepugilistica","Vico":"Ginnastica Adulti"}],["19:30",{}],["20:00",{"G.Bruno Gin":"MMA","Nomentano":"Pallavolo Amatoriale","Vico":"Disponibile"}],["20:30",{"Vico":"Difesa Personale"}],["21:00",{}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Martedi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Simoncelli IN","Simoncelli OUT","Vico"],"slots":[["14:00",{}],["14:30",{}],["15:00",{"G.Bruno Succ":"Disponibile"}],["15:30",{}],["16:00",{"Vico":"Karate"}],["16:30",{"Simoncelli IN":"Pallavolo S3","Simoncelli OUT":"Calcio"}],["17:00",{"Nomentano":"Pallavolo u14F"}],["17:30",{}],["18:00",{"Simoncelli IN":"Posturale"}],["18:30",{}],["19:00",{"Simoncelli IN":"Funzionale Crossfit"}],["19:30",{}],["20:00",{"G.Bruno Vol":"MMA","Vico":"Ginnastica Funzionale"}],["20:30",{"G.Bruno Succ":"Pallavolo Amatoriale Rinascita","Simoncelli IN":"Yoga - FRA"}],["21:00",{"Vico":"Disponibile"}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Mercoledi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Simoncelli IN","Simoncelli OUT","Vico"],"slots":[["14:00",{}],["14:30",{"Vico":"Pallavolo u14M"}],["15:00",{}],["15:30",{"Nomentano":"Yoga (da confermare)"}],["16:00",{"Vico":"Ginnastica Adulti"}],["16:30",{"Simoncelli IN":"Karate Junior","Simoncelli OUT":"Pattinaggio"}],["17:00",{"Vico":"Disponibile"}],["17:30",{}],["18:00",{"G.Bruno Succ":"Disponibile"}],["18:30",{}],["19:00",{"G.Bruno Gin":"Disponibile","Vico":"Ginnastica Adulti"}],["19:30",{}],["20:00",{"G.Bruno Vol":"MMA","G.Bruno Succ":"Disponibile","Nomentano":"Pallavolo Amatoriale","Vico":"Disponibile"}],["20:30",{"Vico":"Difesa Personale"}],["21:00",{}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Giovedi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Simoncelli IN","Simoncelli OUT","Vico"],"slots":[["14:00",{}],["14:30",{}],["15:00",{"G.Bruno Succ":"Disponibile"}],["15:30",{}],["16:00",{"Vico":"Karate"}],["16:30",{"Simoncelli IN":"Pallavolo S3","Simoncelli OUT":"Atletica / MTB"}],["17:00",{}],["17:30",{}],["18:00",{"Simoncelli IN":"Funzionale Crossfit"}],["18:30",{}],["19:00",{"Simoncelli IN":"Yoga - FRA"}],["19:30",{}],["20:00",{"G.Bruno Gin":"MMA","Nomentano":"Pallavolo u14F","Simoncelli IN":"Yoga - FRA","Vico":"Ginnastica Funzionale"}],["20:30",{"G.Bruno Succ":"Disponibile"}],["21:00",{"Vico":"Disponibile"}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Venerdi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Simoncelli IN","Simoncelli OUT","Vico"],"slots":[["14:00",{}],["14:30",{"Vico":"Pallavolo u14F"}],["15:00",{}],["15:30",{}],["16:00",{"Vico":"Ginnastica Adulti"}],["16:30",{"Simoncelli IN":"Basket","Simoncelli OUT":"Calcio"}],["17:00",{"Vico":"Pallavolo S3"}],["17:30",{}],["18:00",{"Simoncelli IN":"Basket"}],["18:30",{}],["19:00",{"G.Bruno Gin":"Prepugilistica","Vico":"Ginnastica Adulti"}],["19:30",{}],["20:00",{"G.Bruno Vol":"MMA","Vico":"Disponibile"}],["20:30",{}],["21:00",{}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Sabato":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Simoncelli IN","Simoncelli OUT","Vico"],"slots":[["09:00",{}],["09:30",{"Simoncelli IN":"Yoga - FRA"}],["10:00",{"Simoncelli OUT":"MTB"}],["10:30",{}],["11:00",{}],["11:30",{}],["12:00",{}],["12:30",{}],["13:00",{}],["13:30",{}],["14:00",{}],["14:30",{}],["15:00",{}],["15:30",{}],["16:00",{}],["16:30",{}],["17:00",{}],["17:30",{}],["18:00",{}],["18:30",{}],["19:00",{}],["19:30",{}],["20:00",{}],["20:30",{}],["21:00",{}],["21:30",{}],["22:00",{}],["22:30",{}]]}},"orig":{"Lunedi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Vico"],"slots":[["14:00",{}],["14:30",{"Vico":"Pallavolo u14F"}],["15:00",{}],["15:30",{}],["16:00",{"Vico":"Ginnastica Adulti"}],["16:30",{}],["17:00",{"Vico":"Pallavolo S3"}],["17:30",{}],["18:00",{}],["18:30",{"G.Bruno Gin":"Disponibile"}],["19:00",{"Vico":"Ginnastica Adulti"}],["19:30",{}],["20:00",{"Nomentano":"Pallavolo Amatoriale","Vico":"Disponibile"}],["20:30",{"Vico":"Difesa Personale"}],["21:00",{}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Martedi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Vico"],"slots":[["14:00",{}],["14:30",{}],["15:00",{"G.Bruno Succ":"Disponibile"}],["15:30",{}],["16:00",{"Vico":"Karate"}],["16:30",{}],["17:00",{"Nomentano":"Disponibile"}],["17:30",{}],["18:00",{}],["18:30",{}],["19:00",{}],["19:30",{}],["20:00",{"G.Bruno Vol":"Disponibile","Vico":"Ginnastica Funzionale"}],["20:30",{"G.Bruno Vol":"Difesa Personale","G.Bruno Succ":"Pallavolo Amatoriale Rinascita"}],["21:00",{"Vico":"Disponibile"}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Mercoledi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Vico"],"slots":[["14:00",{}],["14:30",{}],["15:00",{}],["15:30",{}],["16:00",{"Vico":"Ginnastica Adulti"}],["16:30",{}],["17:00",{"Vico":"Pallavolo u14M"}],["17:30",{}],["18:00",{"G.Bruno Succ":"Pallavolo Diamond","Nomentano":"Pallavolo Diamond"}],["18:30",{}],["19:00",{"G.Bruno Gin":"Disponibile","Vico":"Ginnastica Adulti"}],["19:30",{}],["20:00",{"G.Bruno Vol":"Disponibile","G.Bruno Succ":"Pallavolo Amatoriale","Nomentano":"Pallavolo u14F","Vico":"Disponibile"}],["20:30",{"Vico":"Difesa Personale"}],["21:00",{}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Giovedi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Vico"],"slots":[["14:00",{}],["14:30",{"G.Bruno Succ":"Disponibile"}],["15:00",{}],["15:30",{}],["16:00",{"Vico":"Karate"}],["16:30",{}],["17:00",{}],["17:30",{}],["18:00",{}],["18:30",{}],["19:00",{}],["19:30",{}],["20:00",{"G.Bruno Gin":"Disponibile","Nomentano":"Disponibile","Vico":"Ginnastica Funzionale"}],["20:30",{"G.Bruno Succ":"Disponibile"}],["21:00",{"Vico":"Disponibile"}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Venerdi":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Vico"],"slots":[["14:00",{}],["14:30",{"Vico":"Pallavolo u14F"}],["15:00",{}],["15:30",{}],["16:00",{"Vico":"Ginnastica Adulti"}],["16:30",{}],["17:00",{"Vico":"Pallavolo S3"}],["17:30",{}],["18:00",{}],["18:30",{}],["19:00",{"G.Bruno Gin":"Disponibile","Vico":"Ginnastica Adulti"}],["19:30",{}],["20:00",{"G.Bruno Vol":"Disponibile","Vico":"Disponibile"}],["20:30",{}],["21:00",{}],["21:30",{}],["22:00",{}],["22:30",{}],["23:00",{}]]},"Sabato":{"gyms":["G.Bruno Gin","G.Bruno Vol","G.Bruno Succ","Nomentano","Vico"],"slots":[["14:00",{}],["14:30",{}],["15:00",{}],["15:30",{}],["16:00",{}],["16:30",{}],["17:00",{}],["17:30",{}],["18:00",{}],["18:30",{}],["19:00",{}],["19:30",{}],["20:00",{}],["20:30",{}],["21:00",{}],["21:30",{}],["22:00",{}],["22:30",{}]]}}};
 
@@ -147,31 +148,42 @@ $('#lIn').onclick=()=>authDo(()=>signInWithEmailAndPassword(auth,$('#lEmail').va
 $('#lReg').onclick=()=>authDo(async()=>{const c=await createUserWithEmailAndPassword(auth,$('#lEmail').value.trim(),$('#lPass').value);try{await sendEmailVerification(c.user);toast('Ti abbiamo inviato una mail: verificala per ottenere i permessi')}catch(e){}});
 $('#lPass').onkeydown=e=>{if(e.key==='Enter')$('#lIn').click()};
 
-/* ---------- RUOLI ---------- */
-async function computeRole(){
-  const u=auth.currentUser;S.role='visitor';S.unv=false;
-  if(u){const em=(u.email||'').toLowerCase();
-    if(!u.emailVerified)S.unv=true;
-    else if(ADMINS.includes(em))S.role='admin';
-    else{try{if((await getDoc(doc(db,'staff',em))).exists())S.role='staff'}catch(e){}}}
+/* ---------- RUOLI: collezione Firestore "users" (campo ruolo: utente | allenatore | admin) ---------- */
+let unsubUser=null;
+const fallbackAdmin=()=>!!(S.user&&S.user.emailVerified&&ADMINS.includes((S.user.email||'').toLowerCase()));
+async function ensureUser(u){
+  const ref=doc(db,'users',u.uid);
+  try{if(!(await getDoc(ref)).exists())await setDoc(ref,{email:(u.email||'').toLowerCase(),nome:u.displayName||(u.email||'').split('@')[0],ruolo:'utente',creato:serverTimestamp()})}catch(e){}
+}
+function setRole(ruolo){
+  const was=S.admin;
+  S.role=fallbackAdmin()||ruolo==='admin'?'admin':ruolo==='allenatore'?'staff':'visitor';
   S.admin=S.role==='admin';S.can=S.role!=='visitor';
-  S.unsubA.forEach(f=>f());S.unsubA=[];S.tel={};S.staff=[];
-  if(S.admin){
+  if(S.admin&&!was){
     S.unsubA.push(onSnapshot(collection(db,'contatti'),sn=>{S.tel={};sn.forEach(d=>S.tel[d.id]=d.data().tel);onData()},()=>{}));
-    S.unsubA.push(onSnapshot(collection(db,'staff'),sn=>{S.staff=sn.docs.map(d=>d.id).sort();if($('#modal').dataset.k==='staff')drawStaff()},()=>{}));
     if(S.loaded&&!S.kids.length&&!S.seeded)autoSeed();
   }
+  if(!S.admin&&was){S.unsubA.forEach(f=>f());S.unsubA=[];S.tel={}}
 }
-onAuthStateChanged(auth,async u=>{S.user=u;if(u)closeLogin();await computeRole();render()});
+onAuthStateChanged(auth,async u=>{
+  if(unsubUser){unsubUser();unsubUser=null}
+  S.user=u;setRole(null);
+  if(!u){render();return}
+  closeLogin();render();
+  await ensureUser(u);
+  unsubUser=onSnapshot(doc(db,'users',u.uid),sn=>{setRole(sn.data()?.ruolo);render()},()=>{});
+});
 
 /* ---------- DATI (lettura pubblica) ---------- */
 onSnapshot(collection(db,'bambini'),sn=>{S.kids=sn.docs.map(d=>({id:d.id,...d.data()}));S.loaded=true;if(!sn.size&&S.admin&&!S.seeded)autoSeed();onData()},e=>{S.loaded=true;toast('Errore lettura: '+e.code+' — pubblica le nuove regole Firestore');onData()});
 onSnapshot(collection(db,'presenze'),sn=>{S.pres={};sn.forEach(d=>{S.pres[d.id]=d.data().stato});onData()},()=>{});
 function autoSeed(){S.seeded=true;seed().then(()=>toast('Caricati i 119 bambini dal file Excel')).catch(e=>toast('Errore: '+e.code))}
+const chunkN=()=>fallbackAdmin()?250:5;
+async function commitOps(ops){const n=chunkN();for(let i=0;i<ops.length;i+=n){const b=writeBatch(db);ops.slice(i,i+n).forEach(([r,d,o])=>o?b.set(r,d,o):b.set(r,d));await b.commit()}}
 async function seed(){
-  const b=writeBatch(db);
-  DATA.kids.forEach(([g,n,s,c,t])=>{const id=kidId(g,n);b.set(doc(db,'bambini',id),{nome:n,sport:s,classe:c,giorno:g},{merge:true});b.set(doc(db,'contatti',id),{tel:t},{merge:true})});
-  await b.commit();
+  const ops=[];
+  DATA.kids.forEach(([g,n,s,c,t])=>{const id=kidId(g,n);ops.push([doc(db,'bambini',id),{nome:n,sport:s,classe:c,giorno:g},{merge:true}],[doc(db,'contatti',id),{tel:t},{merge:true}])});
+  await commitOps(ops);
 }
 async function mark(id,stato){
   const key=S.date+'_'+id,cur=S.pres[key];
@@ -184,8 +196,7 @@ async function markAll(){
   const l=dayKids().filter(k=>!st(k));
   if(!l.length){toast('Sono già tutti segnati');return}
   if(!confirm(`Segnare PRESENTI i ${l.length} bambini ancora da segnare?`))return;
-  const b=writeBatch(db);l.forEach(k=>b.set(doc(db,'presenze',S.date+'_'+k.id),{date:S.date,kidId:k.id,stato:'presente',by:S.user.email,ts:serverTimestamp()}));
-  try{await b.commit();toast(l.length+' segnati presenti')}catch(e){toast('Non salvato: '+e.code)}
+  try{await commitOps(l.map(k=>[doc(db,'presenze',S.date+'_'+k.id),{date:S.date,kidId:k.id,stato:'presente',by:S.user.email,ts:serverTimestamp()}]));toast(l.length+' segnati presenti')}catch(e){toast('Non salvato: '+e.code)}
 }
 
 /* ---------- LOGICA GIORNO ---------- */
@@ -213,7 +224,7 @@ $('#dpick').onchange=e=>{if(e.target.value)setDate(e.target.value,false)};
 
 /* ---------- RENDER ---------- */
 function renderTop(){
-  $('#roleBadge').innerHTML=S.admin?`<span class="text-xs font-extrabold px-2.5 py-1 rounded-full" style="background:linear-gradient(135deg,#f5c542,#e0962a);color:#3a2500">★ Admin</span>`:S.role==='staff'?`<span class="text-xs font-extrabold px-2.5 py-1 rounded-full" style="background:#10b981;color:#04281d">Appello</span>`:'';
+  $('#roleBadge').innerHTML=S.admin?`<span class="text-xs font-extrabold px-2.5 py-1 rounded-full" style="background:linear-gradient(135deg,#f5c542,#e0962a);color:#3a2500">★ Admin</span>`:S.role==='staff'?`<span class="text-xs font-extrabold px-2.5 py-1 rounded-full" style="background:#10b981;color:#04281d">Allenatore</span>`:'';
   const u=S.user,ini=u?((u.displayName||u.email||'?').split(/[\s@._]+/).filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase()):'';
   $('#accBtn').className=u?'tbtn':'btn px-4 py-2 text-sm text-white flex items-center gap-1.5';
   $('#accBtn').style.background=u?'#fff':'var(--coral)';$('#accBtn').style.color=u?'var(--navy)':'#fff';
@@ -222,15 +233,14 @@ function renderTop(){
 }
 function renderMenu(){
   const u=S.user,sp=['all',...Object.keys(SPORT)];
-  const role=S.admin?'Admin':S.role==='staff'?'Modalità Appello':S.unv?'Email non verificata · solo visualizzazione':'Solo visualizzazione';
+  const role=S.admin?'Admin':S.role==='staff'?'Allenatore':'Solo visualizzazione';
   $('#menu').innerHTML=(u?`<div class="px-3 pt-2 pb-1"><div class="text-sm font-bold truncate">${esc(u.email)}</div><div class="text-xs font-semibold" style="color:var(--mute)">${role}</div></div>`:`<div class="px-3 pt-2 pb-1 text-xs font-semibold" style="color:var(--mute)">${ic('eye',13)} Solo visualizzazione</div>`)+
   `<button class="mi" data-act="date">${ic('cal',18)} Vai a una data…</button>
   <div class="mh">Sport</div>`+sp.map(k=>`<button class="mi ${S.view===k?'on':''}" data-v="${k}">${k==='all'?'📋 Tutti gli sport':SPORT[k].e+' '+k}</button>`).join('')+
   `<div class="mh">Altro</div><button class="mi ${S.view==='stats'?'on':''}" data-v="stats">${ic('chart',18)} Statistiche &amp; media presenze</button>`+
-  (S.admin?`<button class="mi ${S.view==='board'?'on':''}" data-v="board">${ic('grid',18)} 🔒 Tabellone palestre 26/27 &amp; Originale</button><button class="mi" data-act="staff">${ic('users',18)} Gestisci chi può fare l'appello</button><button class="mi" data-act="add">${ic('plus',18)} Aggiungi bambino</button><button class="mi" data-act="sync">${ic('sync',18)} Sincronizza dati da Excel</button>`:'')+
+  (S.admin?`<button class="mi ${S.view==='board'?'on':''}" data-v="board">${ic('grid',18)} 🔒 Tabellone palestre 26/27 &amp; Originale</button><button class="mi" data-act="add">${ic('plus',18)} Aggiungi bambino</button><button class="mi" data-act="sync">${ic('sync',18)} Sincronizza dati da Excel</button>`:'')+
   `<button class="mi" data-act="theme">${ic(isDark()?'sun':'moon',18)} Tema ${isDark()?'chiaro':'scuro'}</button>`+
-  (u&&!S.can?`<button class="mi" data-act="perm">${ic('sync',18)} Aggiorna i miei permessi</button>`:'')+
-  (u?`<button class="mi" data-act="out">${ic('out',18)} Esci</button>`:`<button class="mi" data-act="login">${ic('in',18)} Accedi</button>`);
+    (u?`<button class="mi" data-act="out">${ic('out',18)} Esci</button>`:`<button class="mi" data-act="login">${ic('in',18)} Accedi</button>`);
 }
 function render(){
   if(S.view==='board'&&!S.admin)S.view='all';
@@ -277,7 +287,7 @@ function refresh(){
   $('#pTxt').textContent=eff?(done>=eff?'Appello completato ✓':`Mancano ${eff-done} da segnare`):'Nessun bambino previsto';
   $('#pPct').textContent=(eff?Math.round(done/eff*100):0)+'%';
   $('#bP').style.width=(eff?c.p/eff*100:0)+'%';$('#bA').style.width=(eff?c.a/eff*100:0)+'%';
-  $('#note').innerHTML=S.can?'':`<div class="rounded-2xl p-3 mb-3 text-sm font-semibold flex items-center gap-2.5" style="background:color-mix(in srgb,var(--coral) 11%,var(--surf));border:1px solid color-mix(in srgb,var(--coral) 30%,transparent)"><span style="color:var(--coral)">${ic('eye',20)}</span><span class="flex-1">${S.user?(S.unv?'Verifica la tua email per ottenere i permessi. Per ora puoi solo guardare.':'Questo account non è abilitato all\'appello: puoi solo guardare.'):'Stai guardando in sola visualizzazione.'}</span>${S.user?'':`<button data-act="login" class="btn px-3 py-1.5 text-white text-sm" style="background:var(--coral)">Accedi</button>`}</div>`;
+  $('#note').innerHTML=S.can?'':`<div class="rounded-2xl p-3 mb-3 text-sm font-semibold flex items-center gap-2.5" style="background:color-mix(in srgb,var(--coral) 11%,var(--surf));border:1px solid color-mix(in srgb,var(--coral) 30%,transparent)"><span style="color:var(--coral)">${ic('eye',20)}</span><span class="flex-1">${S.user?'Il tuo account non è abilitato all\'appello: puoi solo guardare. Chiedi a un Admin di renderti Allenatore.':'Stai guardando in sola visualizzazione.'}</span>${S.user?'':`<button data-act="login" class="btn px-3 py-1.5 text-white text-sm" style="background:var(--coral)">Accedi</button>`}</div>`;
   renderList();
 }
 function renderList(){
@@ -371,15 +381,6 @@ function kidModal(id){
     try{await setDoc(doc(db,'bambini',nid),{nome,sport:$('#fS').value,classe:$('#fC').value.trim(),giorno});await setDoc(doc(db,'contatti',nid),{tel:$('#fT').value.trim()});closeM();toast('Salvato')}catch(e){toast('Errore: '+e.code)}};
   if(id)$('#fDel').onclick=async()=>{if(!confirm('Eliminare '+k.nome+' dal registro? Lo storico presenze resta salvato.'))return;try{await deleteDoc(doc(db,'bambini',id));await deleteDoc(doc(db,'contatti',id));closeM();toast('Bambino eliminato')}catch(e){toast('Errore: '+e.code)}};
 }
-function staffModal(){openM('staff');drawStaff()}
-function drawStaff(){
-  M.innerHTML=`<div class="surf rounded-3xl p-5 w-full max-w-md fade"><div class="font-extrabold text-lg">Chi può fare l'appello</div><p class="text-sm mb-3" style="color:var(--mute)">Questi account possono segnare Presente e Assente. Tutti gli altri possono solo guardare. L'email deve essere verificata (con Google lo è già).</p>
-  <div class="space-y-1.5 mb-3" style="max-height:38vh;overflow:auto">${S.staff.map(e=>`<div class="flex items-center gap-2 rounded-xl px-3 py-2 surf"><span class="flex-1 text-sm font-semibold truncate">${esc(e)}</span><button data-rmstaff="${esc(e)}" class="btn p-1.5" style="color:var(--kot)" aria-label="Rimuovi">${ic('trash',16)}</button></div>`).join('')||`<div class="text-sm py-2" style="color:var(--mute)">Nessun account aggiunto.</div>`}</div>
-  <div class="flex gap-2 mb-3"><input id="sMail" type="email" placeholder="email@esempio.it" class="inp"><button id="sAdd" class="btn px-4 text-white" style="background:var(--coral)">Aggiungi</button></div><button id="sX" class="btn w-full py-3 surf">Chiudi</button></div>`;
-  $('#sX').onclick=closeM;
-  $('#sAdd').onclick=async()=>{const e=$('#sMail').value.trim().toLowerCase();if(!/^\S+@\S+\.\S+$/.test(e)){toast('Email non valida');return}try{await setDoc(doc(db,'staff',e),{email:e,by:S.user.email,ts:serverTimestamp()});toast('Account aggiunto')}catch(x){toast('Errore: '+x.code)}};
-}
-
 /* ---------- EVENTI ---------- */
 document.addEventListener('click',async e=>{
   const menu=$('#menu');
@@ -395,7 +396,6 @@ document.addEventListener('click',async e=>{
   else if(t.dataset.f){S.flt=t.dataset.f;refresh()}
   else if(t.dataset.m)mark(t.dataset.id,t.dataset.m);
   else if(t.dataset.edit)kidModal(t.dataset.edit);
-  else if(t.dataset.rmstaff){try{await deleteDoc(doc(db,'staff',t.dataset.rmstaff));toast('Account rimosso')}catch(x){toast('Errore: '+x.code)}}
   else if(a){hide();
     if(a==='login')openLogin();
     else if(a==='out')signOut(auth);
@@ -403,9 +403,7 @@ document.addEventListener('click',async e=>{
     else if(a==='theme'){setDark(!isDark());renderMenu()}
     else if(a==='allp')markAll();
     else if(a==='add')kidModal();
-    else if(a==='staff')staffModal();
     else if(a==='gofri'||a==='gomon'){const x=parse(S.date),w=x.getDay();setDate(iso(addDays(x,a==='gofri'?(w===6?-1:-2):(w===6?2:1))))}
-    else if(a==='perm'){try{await auth.currentUser.reload();await auth.currentUser.getIdToken(true)}catch(x){}await computeRole();render();toast(S.can?'Permessi attivi ✓':'Ancora nessun permesso per questo account')}
     else if(a==='sync'&&confirm('Sincronizzare i 119 bambini dal file Excel? Nomi, sport, classi e telefoni verranno riallineati al file (le presenze non vengono toccate).'))seed().then(()=>toast('Sincronizzazione completata')).catch(x=>toast('Errore: '+x.code));
   }
 });
