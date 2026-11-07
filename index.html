@@ -74,10 +74,25 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',
 @keyframes bp{0%{transform:scale(1)}35%{transform:scale(1.22)}100%{transform:scale(1)}}
 #watermark{position:fixed;right:-4.5rem;bottom:-4.5rem;width:16rem;height:16rem;opacity:.05;pointer-events:none;z-index:0;filter:grayscale(1) brightness(1.6)}
 .dark #watermark{opacity:.07}
-#main{view-transition-name:mainview}
-#band{view-transition-name:bandview}
-::view-transition-old(mainview),::view-transition-new(mainview),::view-transition-old(bandview),::view-transition-new(bandview){animation-duration:.26s;animation-timing-function:cubic-bezier(.2,.8,.2,1)}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}::view-transition-group(*){animation:none!important}}
+#main{will-change:opacity}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* Telefoni stretti: tutto resta leggibile e comodo da toccare, senza tagli o sovrapposizioni */
+@media(max-width:380px){
+  .tile b{font-size:1.28rem}
+  .tile span{font-size:.62rem}
+  .tile{padding:.5rem .1rem}
+  .kid{padding:.6rem .6rem}
+  .av{width:2.4rem;height:2.4rem;font-size:.8rem}
+  .nm{font-size:.92rem}
+  .pill{font-size:.68rem}
+  .tb{width:2.65rem;height:2.65rem}
+  #band .max-w-3xl{padding-left:.85rem;padding-right:.85rem}
+  .content{padding-left:.85rem;padding-right:.85rem}
+}
+@media(max-width:340px){
+  .tile b{font-size:1.1rem}
+  .av{width:2.2rem;height:2.2rem;font-size:.74rem}
+}
 :focus-visible{outline:3px solid var(--coral);outline-offset:2px}
 </style>
 </head>
@@ -145,14 +160,23 @@ const slug=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().re
 const kidId=(g,n)=>slug(g)+'_'+slug(n);
 const cap=s=>s[0].toUpperCase()+s.slice(1);
 
-const S={user:null,role:'visitor',admin:false,can:false,unv:false,date:iso(new Date()),view:'all',flt:'tutti',q:'',kids:[],pres:{},tel:{},staff:[],bd:'b2627',bday:'Lunedi',loaded:false,seeded:false,shell:false,unsubA:[]};
+const S={user:null,role:'visitor',admin:false,can:false,canCall:false,unv:false,date:iso(new Date()),view:'all',flt:'tutti',q:'',kids:[],pres:{},tel:{},staff:[],bd:'b2627',bday:'Lunedi',loaded:false,seeded:false,shell:false,unsubA:[]};
 let charts=[];
 
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2800)}
 const reduceMotion=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* Crossfade affidabile e controllato (niente View Transitions API: su contenuti di altezza
+   variabile generava artefatti grafici — card che sfumavano a metà schermo). Sfuma solo
+   l'opacità del contenitore, senza mai toccare lo scroll o fare snapshot delle dimensioni. */
 function vt(fn){
-  if(reduceMotion()||!document.startViewTransition){fn();return}
-  document.startViewTransition(fn);
+  if(reduceMotion()){fn();return}
+  const els=[$('#band'),$('#main')].filter(Boolean);
+  if(!els.length){fn();return}
+  els.forEach(el=>{el.style.transition='opacity .13s ease';el.style.opacity='0'});
+  setTimeout(()=>{
+    fn();
+    requestAnimationFrame(()=>{els.forEach(el=>{el.style.opacity='1'})});
+  },130);
 }
 function bump(el){if(!el||reduceMotion())return;el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump')}
 const isDark=()=>document.documentElement.classList.contains('dark');
@@ -180,14 +204,15 @@ async function ensureUser(u){
   try{if(!(await getDoc(ref)).exists())await setDoc(ref,{email:(u.email||'').toLowerCase(),nome:u.displayName||(u.email||'').split('@')[0],ruolo:'utente',creato:serverTimestamp()})}catch(e){}
 }
 function setRole(ruolo){
-  const was=S.admin;
+  const wasAdmin=S.admin,wasCall=S.canCall;
   S.role=fallbackAdmin()||ruolo==='admin'?'admin':ruolo==='allenatore'?'staff':'visitor';
   S.admin=S.role==='admin';S.can=S.role!=='visitor';
-  if(S.admin&&!was){
-    S.unsubA.push(onSnapshot(collection(db,'contatti'),sn=>{S.tel={};sn.forEach(d=>S.tel[d.id]=d.data().tel);onData()},()=>{}));
-    if(S.loaded&&!S.kids.length&&!S.seeded)autoSeed();
+  S.canCall=S.admin||S.role==='staff';
+  if(S.canCall&&!wasCall){
+    S.unsubA.push(onSnapshot(collection(db,'contatti'),sn=>{S.tel={};sn.forEach(d=>S.tel[d.id]=d.data().tel);onData()},e=>{if(S.role==='staff')toast('Il tuo account Allenatore non può ancora leggere i numeri: chiedi a un Admin di aggiornare le regole Firestore')}));
   }
-  if(!S.admin&&was){S.unsubA.forEach(f=>f());S.unsubA=[];S.tel={}}
+  if(S.admin&&!wasAdmin&&S.loaded&&!S.kids.length&&!S.seeded)autoSeed();
+  if(!S.canCall&&wasCall){S.unsubA.forEach(f=>f());S.unsubA=[];S.tel={}}
 }
 onAuthStateChanged(auth,async u=>{
   if(unsubUser){unsubUser();unsubUser=null}
@@ -273,9 +298,9 @@ function renderMenu(){
   const role=S.admin?'Admin':S.role==='staff'?'Allenatore':'Solo visualizzazione';
   $('#menu').innerHTML=(u?`<div class="px-3 pt-2 pb-1"><div class="text-sm font-bold truncate">${esc(u.email)}</div><div class="text-xs font-semibold" style="color:var(--mute)">${role}</div></div>`:`<div class="px-3 pt-2 pb-1 text-xs font-semibold" style="color:var(--mute)">${ic('eye',13)} Solo visualizzazione</div>`)+
   `<button class="mi" data-act="date">${ic('cal',18)} Vai a una data…</button>
-  <div class="mh">Sport</div>`+sp.map(k=>`<button class="mi ${S.view===k?'on':''}" data-v="${k}">${k==='all'?'📋 Tutti gli sport':SPORT[k].e+' '+k}</button>`).join('')+
+  <div class="mh">Sport</div>`+sp.map(k=>`<button class="mi ${S.view===k?'on':''}" data-v="${k}">${k==='all'?ic('grid',18)+' Tutti gli sport':SPORT[k].e+' '+k}</button>`).join('')+
   `<div class="mh">Altro</div><button class="mi ${S.view==='stats'?'on':''}" data-v="stats">${ic('chart',18)} Statistiche &amp; media presenze</button>`+
-  (S.admin?`<button class="mi ${S.view==='board'?'on':''}" data-v="board">${ic('grid',18)} 🔒 Tabellone palestre 26/27 &amp; Originale</button><button class="mi" data-act="add">${ic('plus',18)} Aggiungi bambino</button><button class="mi" data-act="sync">${ic('sync',18)} Sincronizza dati da Excel</button>`:'')+
+  (S.admin?`<button class="mi ${S.view==='board'?'on':''}" data-v="board">${ic('lock',18)} Tabellone palestre 26/27 &amp; Originale</button><button class="mi" data-act="add">${ic('plus',18)} Aggiungi bambino</button><button class="mi" data-act="sync">${ic('sync',18)} Sincronizza dati da Excel</button>`:'')+
   `<button class="mi" data-act="theme">${ic(isDark()?'sun':'moon',18)} Tema ${isDark()?'chiaro':'scuro'}</button>`+
     (u?`<button class="mi" data-act="out">${ic('out',18)} Esci</button>`:`<button class="mi" data-act="login">${ic('in',18)} Accedi</button>`);
 }
@@ -320,7 +345,7 @@ function refresh(){
   $('#clr').classList.toggle('hidden',S.view==='all');$('#today').classList.toggle('hidden',S.date===TODAY());
   $('#stats').classList.toggle('hidden',we);$('#tools').classList.toggle('hidden',we);$('#fab').classList.toggle('hidden',we);
   $('#allp').classList.toggle('hidden',!S.can);
-  const sc=$('#spchips');if(sc){const sl=sportsToday();sc.innerHTML=sl.length>1?[['all','📋 Tutti']].concat(sl.map(x=>[x,SPORT[x].e+' '+x])).map(([k,t])=>`<button data-v="${k}" class="btn chip rounded-full ${S.view===k?'on':''}">${esc(t)}</button>`).join(''):''}
+  const sc=$('#spchips');if(sc){const sl=sportsToday();sc.innerHTML=sl.length>1?[['all',ic('grid',14)+' Tutti']].concat(sl.map(x=>[x,SPORT[x].e+' '+esc(x)])).map(([k,t])=>`<button data-v="${k}" class="btn chip rounded-full ${S.view===k?'on':''}">${t}</button>`).join(''):''}
   document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('on',b.dataset.f===S.flt));
   [['nT',c.tot],['nP',c.p],['nA',c.a],['nB',c.b]].forEach(([id,v])=>{const el=$('#'+id);if(el.textContent!==String(v)){el.textContent=v;bump(el)}});
   $('#pTxt').textContent=eff?(done>=eff?'Appello completato ✓':`Mancano ${eff-done} da segnare`):'Nessun bambino previsto';
@@ -339,7 +364,7 @@ function kidInnerHTML(k){
   const right=kidRight(k,s,lock);
   return `<div class="flex items-center gap-2.5"><div class="av">${esc(ini)}</div>
     <div class="min-w-0 flex-1"><div class="nm ${s}">${esc(k.nome)}</div><div class="flex flex-wrap gap-1 mt-1"><span class="pill" style="--c:${sp.c}">${sp.e} ${esc(k.sport)}</span>${k.classe?`<span class="pill pill-n">${esc(k.classe)}</span>`:''}</div>${nota?`<div class="text-xs mt-1 flex items-start gap-1" style="color:var(--mute)"><span>📝</span><span class="flex-1">${esc(nota)}</span></div>`:''}</div>${right}</div>
-    ${S.admin?`<div class="flex gap-2 mt-2">${tel?`<a href="tel:${esc(tel)}" class="btn sm flex-1" style="color:var(--coral)">${ic('phone',15)} Chiama</a>`:''}<button data-m="barrato" data-id="${k.id}" class="btn sm flex-1" style="${s==='barrato'?'background:#64748b;border-color:#64748b;color:#fff':''}">${s==='barrato'?ic('undo',15)+' Ripristina':ic('ban',15)+' Non ci sarà'}</button><button data-edit="${k.virt||k.id}" class="btn sm" style="width:2.6rem" aria-label="Modifica">${ic('edit',15)}</button></div>`:''}`;
+    ${S.canCall||S.admin?`<div class="flex gap-2 mt-2">${S.canCall&&tel?`<a href="tel:${esc(tel)}" class="btn sm flex-1" style="color:var(--coral)">${ic('phone',15)} Chiama</a>`:''}${S.admin?`<button data-m="barrato" data-id="${k.id}" class="btn sm flex-1" style="${s==='barrato'?'background:#64748b;border-color:#64748b;color:#fff':''}">${s==='barrato'?ic('undo',15)+' Ripristina':ic('ban',15)+' Non ci sarà'}</button><button data-edit="${k.virt||k.id}" class="btn sm" style="width:2.6rem" aria-label="Modifica">${ic('edit',15)}</button>`:''}</div>`:''}`;
 }
 function updateKidCard(el,k){
   const s=st(k),sp=SPORT[k.sport]||SPORT[DOPO];
@@ -353,8 +378,8 @@ function renderList(){
   if(q)l=l.filter(k=>(k.nome+' '+k.classe).toLowerCase().includes(q));
   if(S.flt==='da')l=l.filter(k=>!st(k));else if(S.flt==='presente'||S.flt==='assente')l=l.filter(k=>st(k)===S.flt);
   if(!S.loaded){box.innerHTML=Array.from({length:5}).map(()=>`<div class="skel" style="height:4.4rem"></div>`).join('');S._listKey=null;return}
-  if(!l.length){box.innerHTML=`<div class="surf rounded-2xl p-8 text-center"><div class="text-3xl mb-1">🔎</div><div class="font-bold">Nessun bambino da mostrare</div><p class="text-sm" style="color:var(--mute)">${S.kids.length?'Cambia filtro, sport o giorno.':'Non ci sono ancora bambini: un Admin deve usare "Sincronizza dati da Excel".'}</p></div>`;S._listKey=null;return}
-  const key=l.map(k=>k.id+':'+(k.nota||'')).join(',')+'|'+S.date+'|'+S.view+'|'+S.flt+'|'+q+'|'+S.admin;
+  if(!l.length){box.innerHTML=`<div class="surf rounded-2xl p-8 text-center"><div class="mb-2 flex justify-center" style="color:var(--mute)">${ic('search',30)}</div><div class="font-bold">Nessun bambino da mostrare</div><p class="text-sm" style="color:var(--mute)">${S.kids.length?'Cambia filtro, sport o giorno.':'Non ci sono ancora bambini: un Admin deve usare "Sincronizza dati da Excel".'}</p></div>`;S._listKey=null;return}
+  const key=l.map(k=>k.id+':'+(k.nota||'')).join(',')+'|'+S.date+'|'+S.view+'|'+S.flt+'|'+q+'|'+S.admin+'|'+S.canCall;
   if(S._listKey===key){
     box.querySelectorAll('[data-kid]').forEach(el=>{const k=l.find(x=>x.id===el.dataset.kid);if(k)updateKidCard(el,k)});
     return;
@@ -396,7 +421,7 @@ function renderStats(m){
   const rows=Object.entries(kid).map(([n,v])=>({n,...v,pc:pc(v.p,v.a)})).sort((a,b)=>b.pc-a.pc||b.p-a.p);
   const sports=Object.keys(SPORT);
   m.innerHTML=`<div class="max-w-3xl mx-auto"><h2 class="text-2xl font-extrabold mb-1">Statistiche &amp; media presenze</h2><p class="text-sm mb-4" style="color:var(--mute)">Calcolate su presenze e assenze segnate (le assenze preavvisate non contano).</p>
-  ${P+A?'':`<div class="surf rounded-2xl p-6 text-center mb-4"><div class="text-3xl">📊</div><div class="font-bold">Ancora nessun dato</div><p class="text-sm" style="color:var(--mute)">Fai il primo appello e i grafici compariranno qui.</p></div>`}
+  ${P+A?'':`<div class="surf rounded-2xl p-6 text-center mb-4"><div class="mb-2 flex justify-center" style="color:var(--mute)">${ic('chart',30)}</div><div class="font-bold">Ancora nessun dato</div><p class="text-sm" style="color:var(--mute)">Fai il primo appello e i grafici compariranno qui.</p></div>`}
   <div class="navy rounded-3xl p-5 mb-4"><div class="text-sm opacity-80">Media presenze complessiva</div><div class="text-5xl font-extrabold">${pc(P,A)}%</div><div class="text-sm opacity-80">${P} presenze · ${A} assenze</div></div>
   <div class="surf rounded-2xl p-4 mb-4"><div class="font-bold mb-2">Presenze per sport (%)</div><div style="height:230px"><canvas id="c1"></canvas></div></div>
   <div class="surf rounded-2xl p-4 mb-4"><div class="font-bold mb-2">Affluenza media per giorno (presenti)</div><div style="height:230px"><canvas id="c2"></canvas></div></div>
@@ -413,7 +438,7 @@ function renderStats(m){
 function blockColor(t){const x=t.toLowerCase();return x.includes('disponibile')?'#22c55e':[['pallavolo','#ec4899'],['basket','#f97316'],['atletica','#06b6d4'],['calcio','#10b981'],['karate','#dc143c'],['pattinaggio','#6366f1'],['mma','#475569'],['prepugilistica','#475569'],['difesa','#7c3aed'],['yoga','#14b8a6'],['ginnastica','#0ea5e9'],['posturale','#84cc16']].find(([k])=>x.includes(k))?.[1]||'#64748b'}
 function renderBoard(m){
   const B=DATA[S.bd],days=Object.keys(B);if(!B[S.bday])S.bday=days[0];const t=B[S.bday];
-  m.innerHTML=`<div class="max-w-3xl mx-auto"><h2 class="text-2xl font-extrabold mb-3">🔒 Tabellone palestre</h2>
+  m.innerHTML=`<div class="max-w-3xl mx-auto"><h2 class="text-2xl font-extrabold mb-3 flex items-center gap-2">${ic('lock',22)} Tabellone palestre</h2>
   <div class="flex gap-2 mb-3"><button data-bd="b2627" class="btn chip rounded-full ${S.bd==='b2627'?'on':''}">Orario 26-27 (Nuovo)</button><button data-bd="orig" class="btn chip rounded-full ${S.bd==='orig'?'on':''}">Orario Originale</button></div>
   <div class="scroll-x flex gap-2 mb-4">${days.map(d=>`<button data-bday="${d}" class="btn chip rounded-full ${S.bday===d?'on':''}">${d}</button>`).join('')}</div>
   <div class="surf rounded-2xl overflow-auto" style="max-height:72vh"><table class="tt w-full border-collapse"><thead><tr><th></th>${t.gyms.map(g=>`<th class="text-left text-xs font-extrabold" style="position:sticky;top:0;background:var(--navy);color:#fff;z-index:3">${esc(g)}</th>`).join('')}</tr></thead><tbody>${t.slots.map(([h,c])=>`<tr><td>${h}</td>${t.gyms.map(g=>{const v=c[g];return v?`<td><div class="blk" style="--c:${blockColor(v)}">${esc(v)}</div></td>`:'<td></td>'}).join('')}</tr>`).join('')}</tbody></table></div></div>`;
