@@ -74,7 +74,6 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',
 @keyframes bp{0%{transform:scale(1)}35%{transform:scale(1.22)}100%{transform:scale(1)}}
 #watermark{position:fixed;right:-4.5rem;bottom:-4.5rem;width:16rem;height:16rem;opacity:.05;pointer-events:none;z-index:0;filter:grayscale(1) brightness(1.6)}
 .dark #watermark{opacity:.07}
-#main{will-change:opacity}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 /* Telefoni stretti: tutto resta leggibile e comodo da toccare, senza tagli o sovrapposizioni */
 @media(max-width:380px){
@@ -85,7 +84,9 @@ html,body{background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',
   .av{width:2.4rem;height:2.4rem;font-size:.8rem}
   .nm{font-size:.92rem}
   .pill{font-size:.68rem}
-  .tb{width:2.65rem;height:2.65rem}
+  .tb{width:2.55rem;height:2.55rem}
+  .kid .flex.gap-2.5{gap:.5rem}
+  .kid .flex.gap-2.flex-none{gap:.35rem}
   #band .max-w-3xl{padding-left:.85rem;padding-right:.85rem}
   .content{padding-left:.85rem;padding-right:.85rem}
 }
@@ -163,21 +164,33 @@ const cap=s=>s[0].toUpperCase()+s.slice(1);
 const S={user:null,role:'visitor',admin:false,can:false,canCall:false,unv:false,date:iso(new Date()),view:'all',flt:'tutti',q:'',kids:[],pres:{},tel:{},staff:[],bd:'b2627',bday:'Lunedi',loaded:false,seeded:false,shell:false,unsubA:[]};
 let charts=[];
 
+/* Normalizza una "classe" in forma numero+lettera (es. "III - A", "3a", "terza A" → "3a")
+   così la ricerca trova il bambino qualunque formato usi chi cerca. */
+function normClasse(raw){
+  let s=(raw||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  if(!s)return'';
+  const WORDS={prima:1,seconda:2,terza:3,quarta:4,quinta:5,sesta:6,settima:7,ottava:8};
+  const ROMAN={i:1,ii:2,iii:3,iv:4,v:5,vi:6,vii:7,viii:8};
+  let num=null,letter='';
+  for(const p of s.split(' ')){
+    if(!p)continue;
+    if(WORDS[p]!=null){num=WORDS[p];continue}
+    if(ROMAN[p]!=null){num=ROMAN[p];continue}
+    if(/^\d+$/.test(p)){num=parseInt(p,10);continue}
+    if(/^[a-z]$/.test(p)){letter=p;continue}
+    let m=p.match(/^(\d+)([a-z])$/);
+    if(m){num=parseInt(m[1],10);letter=m[2];continue}
+    m=p.match(/^([ivx]+)([a-z])$/);
+    if(m&&ROMAN[m[1]]!=null){num=ROMAN[m[1]];letter=m[2];continue}
+  }
+  return(num!=null?String(num):'')+letter;
+}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2800)}
 const reduceMotion=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-/* Crossfade affidabile e controllato (niente View Transitions API: su contenuti di altezza
-   variabile generava artefatti grafici — card che sfumavano a metà schermo). Sfuma solo
-   l'opacità del contenitore, senza mai toccare lo scroll o fare snapshot delle dimensioni. */
-function vt(fn){
-  if(reduceMotion()){fn();return}
-  const els=[$('#band'),$('#main')].filter(Boolean);
-  if(!els.length){fn();return}
-  els.forEach(el=>{el.style.transition='opacity .13s ease';el.style.opacity='0'});
-  setTimeout(()=>{
-    fn();
-    requestAnimationFrame(()=>{els.forEach(el=>{el.style.opacity='1'})});
-  },130);
-}
+/* Niente più dissolvenza a schermo intero (scuriva la pagina tra un'azione e l'altra).
+   Il contenuto si aggiorna subito; il movimento resta solo nelle singole card, che
+   entrano con un piccolo fade/slide (vedi .kid{animation:ci...}). */
+function vt(fn){fn()}
 function bump(el){if(!el||reduceMotion())return;el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump')}
 const isDark=()=>document.documentElement.classList.contains('dark');
 function setDark(on){document.documentElement.classList.toggle('dark',on);try{localStorage.setItem('vico-dark',on?'1':'0')}catch(e){}$('meta[name=theme-color]').content=on?'#121C3C':'#1B2A4E'}
@@ -354,17 +367,18 @@ function refresh(){
   $('#note').innerHTML=S.can?'':`<div class="rounded-2xl p-3 mb-3 text-sm font-semibold flex items-center gap-2.5" style="background:color-mix(in srgb,var(--coral) 11%,var(--surf));border:1px solid color-mix(in srgb,var(--coral) 30%,transparent)"><span style="color:var(--coral)">${ic('eye',20)}</span><span class="flex-1">${S.user?'Il tuo account non è abilitato all\'appello: puoi solo guardare. Chiedi a un Admin di renderti Allenatore.':'Stai guardando in sola visualizzazione.'}</span>${S.user?'':`<button data-act="login" class="btn px-3 py-1.5 text-white text-sm" style="background:var(--coral)">Accedi</button>`}</div>`;
   renderList();
 }
-function kidRight(k,s,lock){
-  return S.can&&!lock?`<div class="flex gap-2 flex-none"><button data-m="presente" data-id="${k.id}" class="tb ${s==='presente'?'on-p':''}" aria-label="Presente">${ic('check',24)}</button><button data-m="assente" data-id="${k.id}" class="tb ${s==='assente'?'on-a':''}" aria-label="Assente">${ic('x',24)}</button></div>`
-    :s==='barrato'?`<div class="badge">${ic('ban',18)}</div>`
-    :`<div class="badge ${s==='presente'?'p':s==='assente'?'a':''}">${s==='presente'?ic('check',18):s==='assente'?ic('x',18):'·'}</div>`;
+function kidRight(k,s,lock,tel,nome){
+  const callBtn=S.canCall&&tel?`<button data-call="${esc(tel)}" data-callname="${esc(nome)}" class="tb callbtn" style="color:var(--coral)" aria-label="Chiama ${esc(nome)}">${ic('phone',18)}</button>`:'';
+  return(S.can&&!lock?`<div class="flex gap-2 flex-none"><button data-m="presente" data-id="${k.id}" class="tb ${s==='presente'?'on-p':''}" aria-label="Presente">${ic('check',24)}</button><button data-m="assente" data-id="${k.id}" class="tb ${s==='assente'?'on-a':''}" aria-label="Assente">${ic('x',24)}</button>${callBtn}</div>`
+    :s==='barrato'?`<div class="flex gap-2 flex-none"><div class="badge">${ic('ban',18)}</div>${callBtn}</div>`
+    :`<div class="flex gap-2 flex-none"><div class="badge ${s==='presente'?'p':s==='assente'?'a':''}">${s==='presente'?ic('check',18):s==='assente'?ic('x',18):'·'}</div>${callBtn}</div>`);
 }
 function kidInnerHTML(k){
   const s=st(k),sp=SPORT[k.sport]||SPORT[DOPO],lock=s==='barrato'&&!S.admin,ini=k.nome.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(),tel=telOf(k),nota=(k.nota||'').trim();
-  const right=kidRight(k,s,lock);
+  const right=kidRight(k,s,lock,tel,k.nome);
   return `<div class="flex items-center gap-2.5"><div class="av">${esc(ini)}</div>
     <div class="min-w-0 flex-1"><div class="nm ${s}">${esc(k.nome)}</div><div class="flex flex-wrap gap-1 mt-1"><span class="pill" style="--c:${sp.c}">${sp.e} ${esc(k.sport)}</span>${k.classe?`<span class="pill pill-n">${esc(k.classe)}</span>`:''}</div>${nota?`<div class="text-xs mt-1 flex items-start gap-1" style="color:var(--mute)"><span>📝</span><span class="flex-1">${esc(nota)}</span></div>`:''}</div>${right}</div>
-    ${S.canCall||S.admin?`<div class="flex gap-2 mt-2">${S.canCall&&tel?`<a href="tel:${esc(tel)}" class="btn sm flex-1" style="color:var(--coral)">${ic('phone',15)} Chiama</a>`:''}${S.admin?`<button data-m="barrato" data-id="${k.id}" class="btn sm flex-1" style="${s==='barrato'?'background:#64748b;border-color:#64748b;color:#fff':''}">${s==='barrato'?ic('undo',15)+' Ripristina':ic('ban',15)+' Non ci sarà'}</button><button data-edit="${k.virt||k.id}" class="btn sm" style="width:2.6rem" aria-label="Modifica">${ic('edit',15)}</button>`:''}</div>`:''}`;
+    ${S.admin?`<div class="flex gap-2 mt-2"><button data-m="barrato" data-id="${k.id}" class="btn sm flex-1" style="${s==='barrato'?'background:#64748b;border-color:#64748b;color:#fff':''}">${s==='barrato'?ic('undo',15)+' Ripristina':ic('ban',15)+' Non ci sarà'}</button><button data-edit="${k.virt||k.id}" class="btn sm" style="width:2.6rem" aria-label="Modifica">${ic('edit',15)}</button></div>`:''}`;
 }
 function updateKidCard(el,k){
   const s=st(k),sp=SPORT[k.sport]||SPORT[DOPO];
@@ -375,7 +389,10 @@ function renderList(){
   const box=$('#list');if(!box)return;
   if(isWE()){const d=parse(S.date).getDay();box.innerHTML=`<div class="surf rounded-2xl p-6 text-center"><div class="text-4xl mb-2">🌴</div><div class="font-extrabold text-lg">${DAYS[d]}: niente appello!</div><p class="text-sm mb-4" style="color:var(--mute)">Il registro copre da lunedì a venerdì.</p><div class="flex gap-2 justify-center"><button id="gofri" data-act="gofri" class="btn px-4 py-2.5 surf">Vedi venerdì</button><button data-act="gomon" class="btn px-4 py-2.5 text-white" style="background:var(--navy)">Vedi lunedì</button></div></div>`;S._listKey=null;return}
   let l=dayKids();const q=S.q.trim().toLowerCase();
-  if(q)l=l.filter(k=>(k.nome+' '+k.classe).toLowerCase().includes(q));
+  if(q){
+    const nq=normClasse(q);
+    l=l.filter(k=>(k.nome+' '+k.classe).toLowerCase().includes(q)||(nq&&normClasse(k.classe).includes(nq)));
+  }
   if(S.flt==='da')l=l.filter(k=>!st(k));else if(S.flt==='presente'||S.flt==='assente')l=l.filter(k=>st(k)===S.flt);
   if(!S.loaded){box.innerHTML=Array.from({length:5}).map(()=>`<div class="skel" style="height:4.4rem"></div>`).join('');S._listKey=null;return}
   if(!l.length){box.innerHTML=`<div class="surf rounded-2xl p-8 text-center"><div class="mb-2 flex justify-center" style="color:var(--mute)">${ic('search',30)}</div><div class="font-bold">Nessun bambino da mostrare</div><p class="text-sm" style="color:var(--mute)">${S.kids.length?'Cambia filtro, sport o giorno.':'Non ci sono ancora bambini: un Admin deve usare "Sincronizza dati da Excel".'}</p></div>`;S._listKey=null;return}
@@ -467,6 +484,17 @@ function kidModal(id){
     try{await setDoc(doc(db,'bambini',nid),{nome,sport:$('#fS').value,classe:$('#fC').value.trim(),giorno,nota:$('#fN2').value.trim()});await setDoc(doc(db,'contatti',nid),{tel:$('#fT').value.trim()});closeM();toast('Salvato')}catch(e){toast('Errore: '+e.code)}};
   if(id)$('#fDel').onclick=async()=>{if(!confirm('Eliminare '+k.nome+' dal registro? Lo storico presenze resta salvato.'))return;try{await deleteDoc(doc(db,'bambini',id));await deleteDoc(doc(db,'contatti',id));closeM();toast('Bambino eliminato')}catch(e){toast('Errore: '+e.code)}};
 }
+function callConfirm(tel,nome){
+  openM('call');
+  M.innerHTML=`<div class="surf rounded-3xl p-5 w-full max-w-xs fade text-center">
+    <div class="mx-auto mb-3 flex items-center justify-center" style="width:3.2rem;height:3.2rem;border-radius:999px;background:color-mix(in srgb,var(--coral) 15%,var(--surf));color:var(--coral)">${ic('phone',24)}</div>
+    <div class="font-extrabold text-lg mb-1">Chiamare ${esc(nome)}?</div>
+    <p class="text-sm mb-4" style="color:var(--mute)">${esc(tel)}</p>
+    <div class="flex gap-2"><button id="cNo" class="btn flex-1 py-3 surf">No</button><a id="cYes" href="tel:${esc(tel)}" class="btn flex-1 py-3 text-white" style="background:var(--coral)">Sì, chiama</a></div>
+  </div>`;
+  $('#cNo').onclick=closeM;
+  $('#cYes').onclick=closeM;
+}
 /* ---------- EVENTI ---------- */
 document.addEventListener('click',async e=>{
   const menu=$('#menu');
@@ -482,6 +510,7 @@ document.addEventListener('click',async e=>{
   else if(t.dataset.f){S.flt=t.dataset.f;vt(()=>refresh())}
   else if(t.dataset.m)mark(t.dataset.id,t.dataset.m);
   else if(t.dataset.edit)kidModal(t.dataset.edit);
+  else if(t.dataset.call)callConfirm(t.dataset.call,t.dataset.callname);
   else if(a){hide();
     if(a==='login')openLogin();
     else if(a==='out')signOut(auth);
