@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1B2A4E">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vico">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Polisportiva Vico · Registro presenze</title>
 <link rel="icon" id="fav">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -349,7 +355,7 @@ function renderMenu(){
   `<div class="mh">Altro</div><button class="mi ${S.view==='stats'?'on':''}" data-v="stats">${ic('chart',18)} Statistiche &amp; media presenze</button>`+
   `<button class="mi" data-act="fb">${ic('bulb',18)} <span class="flex-1">Idee &amp; problemi</span>${fbN()?'<i class="dot s"></i>':''}</button>`+
   (S.admin?`<button class="mi ${S.view==='board'?'on':''}" data-v="board">${ic('lock',18)} Tabellone palestre 26/27 &amp; Originale</button><button class="mi" data-act="add">${ic('plus',18)} Aggiungi bambino</button><button class="mi" data-act="sync">${ic('sync',18)} Sincronizza dati da Excel</button>`:'')+
-  `<button class="mi" data-act="theme">${ic(isDark()?'sun':'moon',18)} Tema ${isDark()?'chiaro':'scuro'}</button>`+
+  (canInstall()?`<button class="mi" data-act="install">${ic('plus',18)} Installa l'app sul telefono</button>`:'')+`<button class="mi" data-act="theme">${ic(isDark()?'sun':'moon',18)} Tema ${isDark()?'chiaro':'scuro'}</button>`+
     (u?`<button class="mi" data-act="out">${ic('out',18)} Esci</button>`:`<button class="mi" data-act="login">${ic('in',18)} Accedi</button>`);
 }
 function render(){
@@ -373,7 +379,8 @@ function buildShell(){
     <div id="stats"><div class="grid grid-cols-4 gap-2"><div class="tile" style="--t:#64748b"><b id="nT">0</b><span>Previsti</span></div><div class="tile" style="--t:#10b981"><b id="nP">0</b><span>Presenti</span></div><div class="tile" style="--t:#f43f5e"><b id="nA">0</b><span>Assenti</span></div><div class="tile" style="--t:#f59e0b"><b id="nB">0</b><span>Non c'è</span></div></div>
     <div class="flex justify-between text-xs font-bold mt-3 mb-1"><span id="pTxt"></span><span id="pPct"></span></div><div class="pbar"><i id="bP" style="background:var(--ok);width:0"></i><i id="bA" style="background:var(--ko);width:0"></i></div></div>
    </div>
-   <div id="note"></div>
+   <div id="inst" class="hidden surf rounded-2xl p-3 mb-3 flex items-center gap-3 fade"><span class="ico" style="width:2.6rem;height:2.6rem">${ic('plus',20)}</span><span class="flex-1 min-w-0"><b class="block text-[.95rem] leading-tight">Metti Vico sulla Home</b><span class="text-xs font-semibold" style="color:var(--mute)">Icona sul telefono, a schermo intero</span></span><button data-act="install" class="btn px-3.5 py-2 text-sm text-white flex-none" style="background:var(--coral)">Installa</button><button data-act="instx" class="flex-none p-1" style="color:var(--mute)" aria-label="Nascondi">${ic('x',16)}</button></div>
+    <div id="note"></div>
    <div id="tools"><div id="spchips" class="scroll-x flex gap-2 mb-2.5"></div><div class="relative mb-2.5"><span class="absolute left-3.5 top-3.5" style="color:var(--mute)">${ic('search',18)}</span><input id="q" value="${esc(S.q)}" placeholder="Cerca per nome o classe…" class="inp" style="padding-left:2.6rem"></div>
     <div class="scroll-x flex gap-2 mb-3">${[['tutti','Tutti'],['da','Da segnare'],['presente','Presenti'],['assente','Assenti']].map(([k,t])=>`<button data-f="${k}" class="btn chip rounded-full">${t}</button>`).join('')}<button id="allp" data-act="allp" class="btn chip rounded-full hidden" style="color:var(--okt)">${ic('all',15)} Tutti presenti</button></div></div>
    <div id="list" class="space-y-2"></div>
@@ -385,7 +392,7 @@ function buildShell(){
 function refresh(){
   if(!S.shell)return;
   if(S.view!=='all'&&!sportsToday().includes(S.view))S.view='all';
-  renderMenu();
+  renderMenu();showInst();
   const d=parse(S.date),we=isWE(),l=dayKids(),c=counts(l),eff=c.tot-c.b,done=c.p+c.a;
   document.querySelectorAll('.dy').forEach(b=>{const k=b.dataset.d;b.classList.toggle('on',k===S.date)});
   $('#mon').textContent=cap(MONTHS[d.getMonth()])+' '+d.getFullYear();
@@ -632,6 +639,31 @@ window.addEventListener('popstate',()=>{
   if(S.view==='stats'||S.view==='board'){S.view='all';S.flt='tutti';render();window.scrollTo(0,0)}
 });
 
+
+/* ---------- INSTALLA COME APP (PWA) ---------- */
+let instEv=null;
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const canInstall=()=>!isStandalone();
+const instOff=()=>{try{return Date.now()-(+localStorage.getItem('vico-inst-x')||0)<12096e5}catch(e){return false}};
+function showInst(){const el=$('#inst');if(el)el.classList.toggle('hidden',!canInstall()||instOff())}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEv=e;renderMenu();showInst()});
+addEventListener('appinstalled',()=>{instEv=null;renderMenu();showInst();toast('App installata')});
+async function installApp(){
+  if(instEv){instEv.prompt();try{await instEv.userChoice}catch(x){}instEv=null;renderMenu();showInst();return}
+  const ios=isIOS(),sh='<svg class="inline -mt-1" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+  const steps=ios
+    ?`<li>1. Tocca <b>Condividi</b> ${sh} (in basso in Safari, in alto a destra in Chrome)</li><li>2. Scegli <b>Aggiungi alla schermata Home</b></li><li>3. Tocca <b>Aggiungi</b></li>`
+    :`<li>1. Tocca il menu <b>⋮</b> del browser (in alto a destra)</li><li>2. Scegli <b>Installa app</b> oppure <b>Aggiungi a schermata Home</b></li><li>3. Conferma con <b>Installa</b> o <b>Aggiungi</b></li>`;
+  openM('inst');
+  M.innerHTML=`<div class="surf rounded-3xl p-5 w-full max-w-sm fade"><div class="font-extrabold text-lg mb-1">Metti Vico sulla Home</div><p class="text-sm mb-3" style="color:var(--mute)">${ios?'Il tuo telefono non permette di farlo con un solo tocco: bastano 3 passaggi.':'Il tuo browser non lo propone da solo: bastano 3 passaggi.'}</p>
+  <ol class="text-sm space-y-2 mb-3">${steps}</ol>
+  ${ios?'<p class="text-xs mb-4" style="color:var(--mute)">Se hai aperto il link da WhatsApp, Instagram o Facebook, tocca prima <b>Apri nel browser</b> (Safari o Chrome).</p>':'<div class="mb-1"></div>'}
+  <button id="iX" class="btn w-full py-3 text-white" style="background:var(--coral)">Ho capito</button></div>`;
+  $('#iX').onclick=closeM;
+}
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+
 /* ---------- MODALI ADMIN ---------- */
 const M=$('#modal');
 const openM=k=>{M.dataset.k=k;M.classList.remove('hidden');M.classList.add('flex')};
@@ -691,6 +723,8 @@ document.addEventListener('click',async e=>{
     else if(a==='allp')markAll();
     else if(a==='add')kidModal();
     else if(a==='fb')openFb();
+    else if(a==='install')installApp();
+    else if(a==='instx'){try{localStorage.setItem('vico-inst-x',Date.now())}catch(x){}showInst()}
     else if(a==='gofri'||a==='gomon'){const x=parse(S.date),w=x.getDay();setDate(iso(addDays(x,a==='gofri'?(w===6?-1:-2):(w===6?2:1))))}
     else if(a==='sync'&&confirm('Sincronizzare i bambini dal file Excel? Nomi, sport, classi e telefoni verranno riallineati al file (le presenze non vengono toccate).'))seed().then(()=>toast('Sincronizzazione completata')).catch(x=>toast('Errore: '+x.code));
   }
